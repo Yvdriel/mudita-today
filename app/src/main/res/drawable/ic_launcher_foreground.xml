@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Rounded-square outline — same shape as the in-app FAB. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#000000"
+        android:strokeWidth="5.5"
+        android:pathData="M40,22 L68,22 A18,18 0 0 1 86,40 L86,68 A18,18 0 0 1 68,86 L40,86 A18,18 0 0 1 22,68 L22,40 A18,18 0 0 1 40,22 Z" />
+    <!-- Checkmark (instead of the FAB's plus). -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#000000"
+        android:strokeWidth="7"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M38,55 L49,66 L71,41" />
+</vector>

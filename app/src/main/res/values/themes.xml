@@ -1,0 +1,10 @@
+<resources>
+    <!-- Bare host theme; all UI is Compose (ThemeMMD). Pure-white window for e-ink (Law 2). -->
+    <style name="Theme.Today" parent="Theme.Material3.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:statusBarColor">@android:color/white</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+</resources>
