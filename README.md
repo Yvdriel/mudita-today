@@ -66,3 +66,10 @@ All scrollables use `LazyColumnMMD`/`LazyRowMMD` (built-in scrollbar). Completio
 `CheckboxMMD`; delete is an overflow menu — no swipe gestures. No animations (nav transitions are
 `None`). Colors come only from `eInkColorScheme`. The only non-MMD UI primitives are `Icon`/
 `IconButton` and layout containers, as the MMD guidelines permit.
+
+## License
+
+[Apache-2.0](LICENSE) © 2026 Yoran van Driel.
+
+The Mudita MMD component library (`com.mudita:MMD`) is a **separate, proprietary** dependency owned
+by Mudita and is **not** covered by this license (see [NOTICE](NOTICE)).
