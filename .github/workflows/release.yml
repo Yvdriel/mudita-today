@@ -35,8 +35,11 @@ jobs:
       - name: Build signed release APK
         run: ./gradlew :app:assembleRelease
 
+      - name: Name the APK after the app + version
+        run: cp app/build/outputs/apk/release/app-release.apk "today-${{ github.ref_name }}.apk"
+
       - name: Publish to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: app/build/outputs/apk/release/app-release.apk
+          files: today-${{ github.ref_name }}.apk
           generate_release_notes: true
