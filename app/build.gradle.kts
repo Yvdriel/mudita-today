@@ -42,6 +42,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Separate package + name so a test build installs alongside the real Today on a
+            // Kompakt instead of clashing with it (different signature, can't co-exist otherwise).
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         release {
             // R8 full mode: strips unused code + resources (notably the huge material-icons-extended
             // set down to the handful actually referenced) for a small bundle.
