@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -31,12 +32,10 @@ import com.mosquishe.today.domain.TaskView
 import com.mosquishe.today.ui.common.ConfirmSheet
 import com.mosquishe.today.ui.common.EmptyState
 import com.mosquishe.today.ui.common.TagFilterBar
-import com.mosquishe.today.ui.common.guardMmdScrollbarDraw
 import com.mosquishe.today.ui.common.TaskRow
 import com.mosquishe.today.util.Dates
 import com.mudita.mmd.components.buttons.FloatingActionButtonMMD
 import com.mudita.mmd.components.divider.HorizontalDividerMMD
-import com.mudita.mmd.components.lazy.LazyColumnMMD
 import com.mudita.mmd.components.menus.DropdownMenuItemMMD
 import com.mudita.mmd.components.menus.DropdownMenuMMD
 import com.mudita.mmd.components.text.TextMMD
@@ -115,7 +114,7 @@ fun TaskListScreen(
                     if (view == TaskView.LOGBOOK && searchQuery.isNotBlank()) "No matches." else emptyMessage(view),
                 )
             } else {
-                LazyColumnMMD(Modifier.fillMaxSize().guardMmdScrollbarDraw()) {
+                LazyColumn(Modifier.fillMaxSize()) {
                     if (view == TaskView.UPCOMING) {
                         tasks.groupBy { it.task.scheduledDate }.forEach { (date, group) ->
                             if (date != null) {
