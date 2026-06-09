@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -30,6 +29,7 @@ import com.mosquishe.today.di.appContainer
 import com.mosquishe.today.di.viewModelCreator
 import com.mosquishe.today.domain.TaskView
 import com.mosquishe.today.ui.common.ConfirmSheet
+import com.mosquishe.today.ui.common.EinkLazyColumn
 import com.mosquishe.today.ui.common.EmptyState
 import com.mosquishe.today.ui.common.TagFilterBar
 import com.mosquishe.today.ui.common.TaskRow
@@ -114,7 +114,7 @@ fun TaskListScreen(
                     if (view == TaskView.LOGBOOK && searchQuery.isNotBlank()) "No matches." else emptyMessage(view),
                 )
             } else {
-                LazyColumn(Modifier.fillMaxSize()) {
+                EinkLazyColumn(Modifier.fillMaxSize()) {
                     if (view == TaskView.UPCOMING) {
                         tasks.groupBy { it.task.scheduledDate }.forEach { (date, group) ->
                             if (date != null) {

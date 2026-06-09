@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -35,6 +34,7 @@ import com.mosquishe.today.di.appContainer
 import com.mosquishe.today.di.viewModelCreator
 import com.mosquishe.today.domain.Recurrence
 import com.mosquishe.today.ui.common.CalendarSheet
+import com.mosquishe.today.ui.common.EinkLazyColumn
 import com.mosquishe.today.util.Dates
 import com.mudita.mmd.components.checkbox.CheckboxMMD
 import com.mudita.mmd.components.chips.AssistChipMMD
@@ -104,7 +104,7 @@ fun TaskDetailScreen(taskId: Long, defaultEpochDay: Long, onBack: () -> Unit) {
             },
         )
 
-        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
+        EinkLazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
             item {
                 TextFieldMMD(
                     value = vm.title,

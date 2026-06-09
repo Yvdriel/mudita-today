@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mosquishe.today.data.local.TagEntity
-import androidx.compose.foundation.lazy.LazyRow
 import com.mudita.mmd.components.chips.FilterChipMMD
 import com.mudita.mmd.components.text.TextMMD
 
@@ -19,7 +18,7 @@ fun TagFilterBar(
     onSelect: (Long?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyRow(
+    EinkLazyRow(
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
     ) {
