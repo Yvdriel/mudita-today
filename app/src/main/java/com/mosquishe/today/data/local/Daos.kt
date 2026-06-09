@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
+import java.time.Instant
 
 @Dao
 interface TaskDao {
@@ -31,6 +32,13 @@ interface TaskDao {
     @Update suspend fun updateTask(task: TaskEntity)
     @Query("DELETE FROM tasks WHERE id = :id") suspend fun deleteTaskById(id: Long)
     @Query("SELECT COALESCE(MAX(sortOrder), 0) FROM tasks") suspend fun maxSortOrder(): Long
+
+    /** Empty the logbook (every completed to-do). */
+    @Query("DELETE FROM tasks WHERE completed = 1") suspend fun deleteAllCompleted()
+
+    /** Drop completed to-dos finished before [threshold] (logbook auto-prune). */
+    @Query("DELETE FROM tasks WHERE completed = 1 AND completedAt IS NOT NULL AND completedAt < :threshold")
+    suspend fun deleteCompletedBefore(threshold: Instant)
 
     /** Sweep blank drafts orphaned by a force-quit (no title, notes, or checklist). */
     @Query(

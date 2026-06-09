@@ -1,5 +1,6 @@
 package com.mosquishe.today.ui.settings
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -30,6 +31,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mosquishe.today.di.appContainer
 import com.mosquishe.today.di.viewModelCreator
+import com.mosquishe.today.ui.common.guardMmdScrollbarDraw
+import com.mudita.mmd.components.chips.FilterChipMMD
 import com.mudita.mmd.components.divider.HorizontalDividerMMD
 import com.mudita.mmd.components.lazy.LazyColumnMMD
 import com.mudita.mmd.components.switcher.SwitchMMD
@@ -44,7 +47,7 @@ import kotlinx.coroutines.flow.first
 fun SettingsScreen(onBack: () -> Unit) {
     val container = appContainer()
     val vm: SettingsViewModel = viewModel(
-        factory = viewModelCreator { SettingsViewModel(container.repository, container.settings) },
+        factory = viewModelCreator { SettingsViewModel(container.repository, container.settings, container.applicationScope) },
     )
 
     val autoComplete by vm.autoComplete.collectAsState()
@@ -64,7 +67,7 @@ fun SettingsScreen(onBack: () -> Unit) {
             },
         )
 
-        LazyColumnMMD(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
+        LazyColumnMMD(Modifier.fillMaxSize().guardMmdScrollbarDraw(), contentPadding = PaddingValues(bottom = 32.dp)) {
             item {
                 Row(
                     Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
@@ -89,6 +92,20 @@ fun SettingsScreen(onBack: () -> Unit) {
                         }
                         TimeInputMMD(state, Modifier.padding(horizontal = 16.dp))
                     }
+                }
+            }
+
+            item { HorizontalDividerMMD() }
+            item { SectionLabel("Keep completed to-dos") }
+            item {
+                val retention by vm.logbookRetentionDays.collectAsState()
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    FilterChipMMD(retention == 0, { vm.setLogbookRetentionDays(0) }, { TextMMD("Forever") })
+                    FilterChipMMD(retention == 30, { vm.setLogbookRetentionDays(30) }, { TextMMD("30 days") })
+                    FilterChipMMD(retention == 90, { vm.setLogbookRetentionDays(90) }, { TextMMD("90 days") })
                 }
             }
 

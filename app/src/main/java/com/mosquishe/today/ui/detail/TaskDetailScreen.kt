@@ -34,6 +34,7 @@ import com.mosquishe.today.di.appContainer
 import com.mosquishe.today.di.viewModelCreator
 import com.mosquishe.today.domain.Recurrence
 import com.mosquishe.today.ui.common.CalendarSheet
+import com.mosquishe.today.ui.common.guardMmdScrollbarDraw
 import com.mosquishe.today.util.Dates
 import com.mudita.mmd.components.checkbox.CheckboxMMD
 import com.mudita.mmd.components.chips.AssistChipMMD
@@ -104,7 +105,7 @@ fun TaskDetailScreen(taskId: Long, defaultEpochDay: Long, onBack: () -> Unit) {
             },
         )
 
-        LazyColumnMMD(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
+        LazyColumnMMD(Modifier.fillMaxSize().guardMmdScrollbarDraw(), contentPadding = PaddingValues(bottom = 32.dp)) {
             item {
                 TextFieldMMD(
                     value = vm.title,
@@ -121,6 +122,47 @@ fun TaskDetailScreen(taskId: Long, defaultEpochDay: Long, onBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     placeholder = { TextMMD("Notes") },
                 )
+            }
+
+            // Checklist ---------------------------------------------------
+            // Kept right under Notes so checking items off doesn't mean scrolling past
+            // every date/tag field (Tobias's suggestion).
+            item { HorizontalDividerMMD() }
+            item { SectionLabel("Checklist") }
+            items(checklist, key = { it.id }) { itemEntity ->
+                var text by remember(itemEntity.id) { mutableStateOf(itemEntity.text) }
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CheckboxMMD(checked = itemEntity.done, onCheckedChange = { vm.setItemDone(itemEntity, it) })
+                    TextFieldMMD(
+                        value = text,
+                        onValueChange = { text = it; vm.setItemText(itemEntity, it) },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                    )
+                    IconButton(onClick = { vm.deleteItem(itemEntity) }) {
+                        Icon(Icons.Filled.Close, contentDescription = "Remove")
+                    }
+                }
+            }
+            item {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextFieldMMD(
+                        value = newItem,
+                        onValueChange = { newItem = it },
+                        modifier = Modifier.weight(1f),
+                        placeholder = { TextMMD("Add item") },
+                        singleLine = true,
+                    )
+                    IconButton(onClick = {
+                        if (newItem.isNotBlank()) { vm.addChecklistItem(newItem); newItem = "" }
+                    }) { Icon(Icons.Filled.Add, contentDescription = "Add item") }
+                }
             }
 
             item { HorizontalDividerMMD() }
@@ -192,45 +234,6 @@ fun TaskDetailScreen(taskId: Long, defaultEpochDay: Long, onBack: () -> Unit) {
                     IconButton(onClick = {
                         if (newTag.isNotBlank()) { vm.createTagAndAssign(newTag); newTag = "" }
                     }) { Icon(Icons.Filled.Add, contentDescription = "Add tag") }
-                }
-            }
-
-            // Checklist ---------------------------------------------------
-            item { HorizontalDividerMMD() }
-            item { SectionLabel("Checklist") }
-            items(checklist, key = { it.id }) { itemEntity ->
-                var text by remember(itemEntity.id) { mutableStateOf(itemEntity.text) }
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CheckboxMMD(checked = itemEntity.done, onCheckedChange = { vm.setItemDone(itemEntity, it) })
-                    TextFieldMMD(
-                        value = text,
-                        onValueChange = { text = it; vm.setItemText(itemEntity, it) },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                    )
-                    IconButton(onClick = { vm.deleteItem(itemEntity) }) {
-                        Icon(Icons.Filled.Close, contentDescription = "Remove")
-                    }
-                }
-            }
-            item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    TextFieldMMD(
-                        value = newItem,
-                        onValueChange = { newItem = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { TextMMD("Add item") },
-                        singleLine = true,
-                    )
-                    IconButton(onClick = {
-                        if (newItem.isNotBlank()) { vm.addChecklistItem(newItem); newItem = "" }
-                    }) { Icon(Icons.Filled.Add, contentDescription = "Add item") }
                 }
             }
         }

@@ -40,8 +40,12 @@ class AppContainer(context: Context) {
     val deletedTaskEvents = MutableSharedFlow<TaskWithDetails>(extraBufferCapacity = 1)
 
     init {
-        // Sweep blank drafts left over from a previous force-quit.
-        applicationScope.launch { repository.deleteEmptyTasks() }
+        applicationScope.launch {
+            // Sweep blank drafts left over from a previous force-quit.
+            repository.deleteEmptyTasks()
+            // Trim the logbook to the retention window, if the user set one.
+            repository.pruneLogbook()
+        }
     }
 }
 

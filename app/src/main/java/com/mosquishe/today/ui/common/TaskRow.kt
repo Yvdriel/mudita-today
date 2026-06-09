@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mosquishe.today.data.local.ChecklistItemEntity
 import com.mosquishe.today.data.local.TaskWithDetails
 import com.mosquishe.today.domain.TaskView
 import com.mosquishe.today.util.Dates
@@ -31,6 +33,7 @@ fun TaskRow(
     today: LocalDate,
     onToggle: (Boolean) -> Unit,
     onClick: () -> Unit,
+    onToggleItem: (ChecklistItemEntity, Boolean) -> Unit = { _, _ -> },
 ) {
     val t = task.task
     Row(
@@ -44,13 +47,33 @@ fun TaskRow(
         Spacer(Modifier.width(12.dp))
         Column(Modifier.fillMaxWidth()) {
             TextMMD(
-                t.title,
+                t.title.ifBlank { "Untitled" },
                 textDecoration = if (t.completed) TextDecoration.LineThrough else TextDecoration.None,
                 maxLines = 2,
             )
             subline(task, view, today)?.let { TextMMD(it, fontSize = 13.sp, maxLines = 1) }
             if (task.tags.isNotEmpty()) {
                 TextMMD(task.tags.joinToString(" ") { "#${it.name}" }, fontSize = 13.sp, maxLines = 1)
+            }
+            // Checklist items inline, tappable straight from the list (Tobias's ask). Skipped in the
+            // Logbook, where everything's already done and the lines would just be noise.
+            if (view != TaskView.LOGBOOK && task.checklist.isNotEmpty()) {
+                Spacer(Modifier.height(4.dp))
+                task.checklist.forEach { item ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CheckboxMMD(checked = item.done, onCheckedChange = { onToggleItem(item, it) })
+                        Spacer(Modifier.width(8.dp))
+                        TextMMD(
+                            item.text,
+                            fontSize = 14.sp,
+                            maxLines = 1,
+                            textDecoration = if (item.done) TextDecoration.LineThrough else TextDecoration.None,
+                        )
+                    }
+                }
             }
         }
     }

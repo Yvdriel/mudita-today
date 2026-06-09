@@ -20,7 +20,7 @@ fun TagFilterBar(
     modifier: Modifier = Modifier,
 ) {
     LazyRowMMD(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().guardMmdScrollbarDraw(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
     ) {
         item {
