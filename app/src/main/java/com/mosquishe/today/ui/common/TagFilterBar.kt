@@ -1,6 +1,8 @@
 package com.mosquishe.today.ui.common
 
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -10,7 +12,12 @@ import com.mosquishe.today.data.local.TagEntity
 import com.mudita.mmd.components.chips.FilterChipMMD
 import com.mudita.mmd.components.text.TextMMD
 
-/** Horizontal "All + tags" filter chip row. Hidden by the caller when there are no tags. */
+/**
+ * "All + tags" filter chips. A FlowRow (wraps to the next line), not a LazyRowMMD: a short chip
+ * row needs no scrollbar, and two MMD lazy lists in one Column (this plus the task LazyColumnMMD)
+ * leave the list blank. The MMD docs say to keep short horizontal rows as a plain Row.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TagFilterBar(
     tags: List<TagEntity>,
@@ -18,25 +25,20 @@ fun TagFilterBar(
     onSelect: (Long?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    EinkLazyRow(
-        modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+    FlowRow(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        item {
-            FilterChipMMD(
-                selected = selectedTagId == null,
-                onClick = { onSelect(null) },
-                label = { TextMMD("All") },
-                modifier = Modifier.padding(end = 8.dp),
-            )
-        }
-        items(tags.size) { i ->
-            val tag = tags[i]
+        FilterChipMMD(
+            selected = selectedTagId == null,
+            onClick = { onSelect(null) },
+            label = { TextMMD("All") },
+        )
+        tags.forEach { tag ->
             FilterChipMMD(
                 selected = selectedTagId == tag.id,
                 onClick = { onSelect(tag.id) },
                 label = { TextMMD(tag.name) },
-                modifier = Modifier.padding(end = 8.dp),
             )
         }
     }

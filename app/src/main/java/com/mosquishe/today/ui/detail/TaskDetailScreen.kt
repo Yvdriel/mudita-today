@@ -34,12 +34,12 @@ import com.mosquishe.today.di.appContainer
 import com.mosquishe.today.di.viewModelCreator
 import com.mosquishe.today.domain.Recurrence
 import com.mosquishe.today.ui.common.CalendarSheet
-import com.mosquishe.today.ui.common.EinkLazyColumn
 import com.mosquishe.today.util.Dates
 import com.mudita.mmd.components.checkbox.CheckboxMMD
 import com.mudita.mmd.components.chips.AssistChipMMD
 import com.mudita.mmd.components.chips.FilterChipMMD
 import com.mudita.mmd.components.divider.HorizontalDividerMMD
+import com.mudita.mmd.components.lazy.LazyColumnMMD
 import com.mudita.mmd.components.menus.DropdownMenuItemMMD
 import com.mudita.mmd.components.menus.DropdownMenuMMD
 import com.mudita.mmd.components.text.TextMMD
@@ -104,7 +104,7 @@ fun TaskDetailScreen(taskId: Long, defaultEpochDay: Long, onBack: () -> Unit) {
             },
         )
 
-        EinkLazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
+        LazyColumnMMD(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
             item {
                 TextFieldMMD(
                     value = vm.title,

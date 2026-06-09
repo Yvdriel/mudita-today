@@ -29,13 +29,13 @@ import com.mosquishe.today.di.appContainer
 import com.mosquishe.today.di.viewModelCreator
 import com.mosquishe.today.domain.TaskView
 import com.mosquishe.today.ui.common.ConfirmSheet
-import com.mosquishe.today.ui.common.EinkLazyColumn
 import com.mosquishe.today.ui.common.EmptyState
 import com.mosquishe.today.ui.common.TagFilterBar
 import com.mosquishe.today.ui.common.TaskRow
 import com.mosquishe.today.util.Dates
 import com.mudita.mmd.components.buttons.FloatingActionButtonMMD
 import com.mudita.mmd.components.divider.HorizontalDividerMMD
+import com.mudita.mmd.components.lazy.LazyColumnMMD
 import com.mudita.mmd.components.menus.DropdownMenuItemMMD
 import com.mudita.mmd.components.menus.DropdownMenuMMD
 import com.mudita.mmd.components.text.TextMMD
@@ -114,7 +114,7 @@ fun TaskListScreen(
                     if (view == TaskView.LOGBOOK && searchQuery.isNotBlank()) "No matches." else emptyMessage(view),
                 )
             } else {
-                EinkLazyColumn(Modifier.fillMaxSize()) {
+                LazyColumnMMD(Modifier.fillMaxSize()) {
                     if (view == TaskView.UPCOMING) {
                         tasks.groupBy { it.task.scheduledDate }.forEach { (date, group) ->
                             if (date != null) {

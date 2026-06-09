@@ -31,9 +31,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mosquishe.today.di.appContainer
 import com.mosquishe.today.di.viewModelCreator
-import com.mosquishe.today.ui.common.EinkLazyColumn
 import com.mudita.mmd.components.chips.FilterChipMMD
 import com.mudita.mmd.components.divider.HorizontalDividerMMD
+import com.mudita.mmd.components.lazy.LazyColumnMMD
 import com.mudita.mmd.components.switcher.SwitchMMD
 import com.mudita.mmd.components.text.TextMMD
 import com.mudita.mmd.components.text_field.TextFieldMMD
@@ -66,7 +66,7 @@ fun SettingsScreen(onBack: () -> Unit) {
             },
         )
 
-        EinkLazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
+        LazyColumnMMD(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
             item {
                 Row(
                     Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
