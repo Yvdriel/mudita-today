@@ -10,6 +10,9 @@
         android:name="android.permission.SCHEDULE_EXACT_ALARM"
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- Show a full-screen reminder alert over the lock screen (the Kompakt blocks normal
+         third-party lock-screen notifications). Auto-granted on Android 12. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
 
     <application
         android:name=".TodayApp"
@@ -29,6 +32,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Full-screen reminder alert shown over the lock screen. -->
+        <activity
+            android:name=".reminder.ReminderAlertActivity"
+            android:exported="false"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:theme="@style/Theme.Today" />
 
         <!-- Fires when a reminder is due; posts the notification. -->
         <receiver

@@ -52,6 +52,22 @@ class ReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
+        // Full-screen intent: when the device is locked/asleep this launches an activity over the
+        // keyguard (the only way past the Kompakt's lock-screen notification allow-list); when the
+        // screen is on it falls back to a normal heads-up notification.
+        val alert = Intent(context, ReminderAlertActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_TASK_ID, taskId)
+            putExtra(EXTRA_TASK_TITLE, title)
+            putExtra(EXTRA_TASK_TIME, time)
+        }
+        val fullScreenPi = PendingIntent.getActivity(
+            context,
+            taskId.toInt(),
+            alert,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+
         val notification = NotificationCompat.Builder(context, CHANNEL_REMINDERS)
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
             .setContentTitle(title)
@@ -59,7 +75,9 @@ class ReminderReceiver : BroadcastReceiver() {
             .setAutoCancel(true)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setContentIntent(contentPi)
+            .setFullScreenIntent(fullScreenPi, true)
             .build()
 
         val manager = NotificationManagerCompat.from(context)
