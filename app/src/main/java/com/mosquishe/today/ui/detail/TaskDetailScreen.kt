@@ -40,7 +40,7 @@ import com.mosquishe.today.di.appContainer
 import com.mosquishe.today.di.viewModelCreator
 import com.mosquishe.today.domain.Recurrence
 import com.mosquishe.today.ui.common.CalendarSheet
-import com.mosquishe.today.ui.common.ReminderSheet
+import com.mosquishe.today.ui.common.TimeSheet
 import com.mosquishe.today.util.Dates
 import java.time.LocalTime
 import com.mudita.mmd.components.checkbox.CheckboxMMD
@@ -304,7 +304,7 @@ fun TaskDetailScreen(taskId: Long, defaultEpochDay: Long, onBack: () -> Unit) {
     }
 
     if (showReminder) {
-        ReminderSheet(
+        TimeSheet(
             initial = reminder ?: LocalTime.of(9, 0),
             onResult = { vm.setReminder(it) },
             onDismiss = { showReminder = false },

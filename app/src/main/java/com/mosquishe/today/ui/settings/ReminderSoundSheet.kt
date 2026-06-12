@@ -106,7 +106,7 @@ fun ReminderSoundSheet(
         }
     }
 
-    val sheetState = rememberModalBottomSheetMMDState()
+    val sheetState = rememberModalBottomSheetMMDState(true) // skipPartiallyExpanded: open fully, no half-drag
     ModalBottomSheetMMD(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
             LazyColumnMMD(Modifier.fillMaxWidth().heightIn(max = 360.dp)) {

@@ -19,14 +19,18 @@ import com.mudita.mmd.components.time.TimeInputMMD
 import com.mudita.mmd.components.time.rememberTimeInputMMDState
 import java.time.LocalTime
 
-/** A bottom sheet wrapping the MMD time input. Returns the chosen time-of-day via [onResult] on Done. */
+/**
+ * A bottom sheet wrapping the MMD time input. Returns the chosen time-of-day via [onResult] on Done.
+ * Kept in a sheet (opened on demand) rather than inline, so the time field's auto-focus keyboard
+ * only appears when the user actually wants to set a time. Used for to-do reminders and day-start.
+ */
 @Composable
-fun ReminderSheet(
+fun TimeSheet(
     initial: LocalTime,
     onResult: (LocalTime) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val sheetState = rememberModalBottomSheetMMDState()
+    val sheetState = rememberModalBottomSheetMMDState(true) // skipPartiallyExpanded: open fully
     ModalBottomSheetMMD(onDismissRequest = onDismiss, sheetState = sheetState) {
         val state = rememberTimeInputMMDState(initial.hour, initial.minute, true)
         Column(Modifier.fillMaxWidth().padding(bottom = 16.dp)) {

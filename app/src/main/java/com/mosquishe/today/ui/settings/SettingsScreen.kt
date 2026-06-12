@@ -18,10 +18,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -31,18 +29,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mosquishe.today.data.settings.SettingsStore
 import com.mosquishe.today.di.appContainer
 import com.mosquishe.today.di.viewModelCreator
+import com.mosquishe.today.ui.common.TimeSheet
+import com.mosquishe.today.util.Dates
 import com.mudita.mmd.components.chips.FilterChipMMD
 import com.mudita.mmd.components.divider.HorizontalDividerMMD
 import com.mudita.mmd.components.lazy.LazyColumnMMD
 import com.mudita.mmd.components.switcher.SwitchMMD
 import com.mudita.mmd.components.text.TextMMD
 import com.mudita.mmd.components.text_field.TextFieldMMD
-import com.mudita.mmd.components.time.TimeInputMMD
-import com.mudita.mmd.components.time.rememberTimeInputMMDState
 import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
-import kotlinx.coroutines.flow.first
+import java.time.LocalTime
 
 @Composable
 fun SettingsScreen(onBack: () -> Unit) {
@@ -56,10 +55,10 @@ fun SettingsScreen(onBack: () -> Unit) {
     val reminderSound by vm.reminderSound.collectAsState()
 
     val context = LocalContext.current
+    val dayStartMinute by vm.dayStartMinute.collectAsState(initial = SettingsStore.DEFAULT_DAY_START_MINUTE)
     var newTag by remember { mutableStateOf("") }
     var showSoundSheet by remember { mutableStateOf(false) }
-    var dayStartSeed by remember { mutableStateOf<Int?>(null) }
-    LaunchedEffect(Unit) { dayStartSeed = vm.dayStartMinute.first() }
+    var showDayStartSheet by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize()) {
         TopAppBarMMD(
@@ -94,15 +93,18 @@ fun SettingsScreen(onBack: () -> Unit) {
             item {
                 Column {
                     SectionLabel("Day starts at")
-                    val seed = dayStartSeed
-                    if (seed != null) {
-                        key(seed) {
-                            val state = rememberTimeInputMMDState(seed / 60, seed % 60, true)
-                            LaunchedEffect(state.hour, state.minute) {
-                                vm.setDayStart(state.hour * 60 + state.minute)
-                            }
-                            TimeInputMMD(state, Modifier.padding(horizontal = 16.dp))
-                        }
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { showDayStartSheet = true }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TextMMD(
+                            Dates.timeLabel(LocalTime.of(dayStartMinute / 60, dayStartMinute % 60)),
+                            modifier = Modifier.weight(1f),
+                        )
+                        TextMMD("Change")
                     }
                     HorizontalDividerMMD()
                 }
@@ -181,6 +183,14 @@ fun SettingsScreen(onBack: () -> Unit) {
                 }
             }
         }
+    }
+
+    if (showDayStartSheet) {
+        TimeSheet(
+            initial = LocalTime.of(dayStartMinute / 60, dayStartMinute % 60),
+            onResult = { vm.setDayStart(it.hour * 60 + it.minute) },
+            onDismiss = { showDayStartSheet = false },
+        )
     }
 
     if (showSoundSheet) {
