@@ -219,7 +219,7 @@ fun TaskDetailScreen(taskId: Long, defaultEpochDay: Long, onBack: () -> Unit) {
                     ChipRow {
                         AssistChipMMD(
                             { ensureNotificationPermission(); showReminder = true },
-                            { TextMMD(reminder?.let { "🔔 ${Dates.timeLabel(it)}" } ?: "Add reminder") },
+                            { TextMMD(reminder?.let { Dates.timeLabel(it) } ?: "Add reminder") },
                         )
                         if (reminder != null) {
                             AssistChipMMD({ vm.setReminder(null) }, { TextMMD("Clear") })

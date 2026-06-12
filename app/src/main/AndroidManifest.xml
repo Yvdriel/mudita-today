@@ -48,10 +48,11 @@
             android:name=".reminder.ReminderReceiver"
             android:exported="false" />
 
-        <!-- Re-arms reminders after a reboot. -->
+        <!-- Re-arms reminders after a reboot. Not exported: BOOT_COMPLETED is a protected
+             system-only broadcast, still delivered to a non-exported receiver. -->
         <receiver
             android:name=".reminder.BootReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>

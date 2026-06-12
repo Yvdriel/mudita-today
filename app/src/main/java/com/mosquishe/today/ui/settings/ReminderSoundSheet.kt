@@ -44,11 +44,12 @@ data class ToneOption(val title: String, val value: String?)
 fun systemNotificationTones(context: Context): List<ToneOption> {
     val manager = RingtoneManager(context).apply { setType(RingtoneManager.TYPE_NOTIFICATION) }
     val tones = mutableListOf<ToneOption>()
-    val cursor = manager.cursor
-    while (cursor.moveToNext()) {
-        val title = cursor.getString(RingtoneManager.TITLE_COLUMN_INDEX)
-        val uri = manager.getRingtoneUri(cursor.position)?.toString() ?: continue
-        tones += ToneOption(title, uri)
+    manager.cursor.use { cursor ->
+        while (cursor.moveToNext()) {
+            val title = cursor.getString(RingtoneManager.TITLE_COLUMN_INDEX)
+            val uri = manager.getRingtoneUri(cursor.position)?.toString() ?: continue
+            tones += ToneOption(title, uri)
+        }
     }
     return tones
 }

@@ -68,7 +68,7 @@ fun AppShell(deepLinkTaskId: MutableStateFlow<Long?> = remember { MutableStateFl
     val pendingTaskId by deepLinkTaskId.collectAsState()
     LaunchedEffect(pendingTaskId) {
         pendingTaskId?.let { id ->
-            nav.navigate(Routes.detail(id))
+            nav.navigate(Routes.detail(id)) { launchSingleTop = true }
             deepLinkTaskId.value = null
         }
     }

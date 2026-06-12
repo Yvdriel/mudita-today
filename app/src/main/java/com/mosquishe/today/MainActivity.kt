@@ -33,6 +33,10 @@ class MainActivity : ComponentActivity() {
 
     private fun consumeDeepLink(intent: Intent?) {
         val id = intent?.getLongExtra(EXTRA_TASK_ID, -1L) ?: -1L
-        if (id > 0L) deepLinkTaskId.value = id
+        if (id > 0L) {
+            deepLinkTaskId.value = id
+            // One-shot: drop the extra so a recreation (config change) doesn't re-navigate.
+            intent?.removeExtra(EXTRA_TASK_ID)
+        }
     }
 }

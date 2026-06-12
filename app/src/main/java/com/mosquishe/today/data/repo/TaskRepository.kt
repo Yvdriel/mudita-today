@@ -109,10 +109,13 @@ class TaskRepository(
     suspend fun setDeadline(taskId: Long, date: LocalDate?) = edit(taskId) { it.copy(deadline = date) }
     suspend fun setRecurrence(taskId: Long, recurrence: Recurrence?) = edit(taskId) { it.copy(recurrence = recurrence) }
 
-    /** Moving the "When" re-aims any reminder (which is a time on that date) and re-arms its alarm. */
+    /**
+     * Moving the "When" re-aims any reminder (which is a time on that date) and re-arms its alarm.
+     * Clearing the date (Someday) also clears the reminder — a reminder can't exist without a date.
+     */
     suspend fun setScheduledDate(taskId: Long, date: LocalDate?) {
         val t = taskDao.getTaskEntity(taskId) ?: return
-        val updated = t.copy(scheduledDate = date)
+        val updated = t.copy(scheduledDate = date, reminderTime = if (date == null) null else t.reminderTime)
         taskDao.updateTask(updated)
         syncReminder(updated)
     }
