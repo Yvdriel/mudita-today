@@ -32,7 +32,10 @@ class ReminderReceiver : BroadcastReceiver() {
                 if (task != null && !task.completed && task.reminderTime != null) {
                     val title = task.title.ifBlank { "To-do" }
                     val time = task.reminderTime.format(TIME_FORMAT)
-                    postNotification(context, task.id, title, time)
+                    // Resolve the user's chosen sound → its channel, ensuring it exists before posting.
+                    val soundUri = app.container.settings.reminderSoundValue()
+                    applyReminderChannel(context, soundUri)
+                    postNotification(context, reminderChannelId(soundUri), task.id, title, time)
                 }
             } finally {
                 pending.finish()
@@ -40,7 +43,7 @@ class ReminderReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun postNotification(context: Context, taskId: Long, title: String, time: String) {
+    private fun postNotification(context: Context, channelId: String, taskId: Long, title: String, time: String) {
         val open = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(EXTRA_TASK_ID, taskId)
@@ -68,7 +71,7 @@ class ReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        val notification = NotificationCompat.Builder(context, CHANNEL_REMINDERS)
+        val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
             .setContentTitle(title)
             .setContentText("Reminder · $time")

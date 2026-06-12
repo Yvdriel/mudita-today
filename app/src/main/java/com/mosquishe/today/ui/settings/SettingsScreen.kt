@@ -1,5 +1,6 @@
 package com.mosquishe.today.ui.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -51,8 +53,11 @@ fun SettingsScreen(onBack: () -> Unit) {
 
     val autoComplete by vm.autoComplete.collectAsState()
     val tags by vm.tags.collectAsState()
+    val reminderSound by vm.reminderSound.collectAsState()
 
+    val context = LocalContext.current
     var newTag by remember { mutableStateOf("") }
+    var showSoundSheet by remember { mutableStateOf(false) }
     var dayStartSeed by remember { mutableStateOf<Int?>(null) }
     LaunchedEffect(Unit) { dayStartSeed = vm.dayStartMinute.first() }
 
@@ -98,6 +103,23 @@ fun SettingsScreen(onBack: () -> Unit) {
                             }
                             TimeInputMMD(state, Modifier.padding(horizontal = 16.dp))
                         }
+                    }
+                    HorizontalDividerMMD()
+                }
+            }
+
+            item {
+                Column {
+                    SectionLabel("Reminder sound")
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { showSoundSheet = true }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TextMMD(reminderSoundLabel(context, reminderSound), modifier = Modifier.weight(1f))
+                        TextMMD("Change")
                     }
                     HorizontalDividerMMD()
                 }
@@ -159,6 +181,14 @@ fun SettingsScreen(onBack: () -> Unit) {
                 }
             }
         }
+    }
+
+    if (showSoundSheet) {
+        ReminderSoundSheet(
+            current = reminderSound,
+            onResult = { container.setReminderSound(it) },
+            onDismiss = { showSoundSheet = false },
+        )
     }
 }
 

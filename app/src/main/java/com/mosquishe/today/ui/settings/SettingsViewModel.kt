@@ -34,6 +34,10 @@ class SettingsViewModel(
             SettingsStore.DEFAULT_LOGBOOK_RETENTION_DAYS,
         )
 
+    /** Chosen reminder sound (null = default tone). Applied to the channel via [AppContainer]. */
+    val reminderSound: StateFlow<String?> =
+        settings.reminderSound.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     fun setAutoComplete(enabled: Boolean) = viewModelScope.launch { settings.setAutoComplete(enabled) }
     fun setDayStart(minuteOfDay: Int) = viewModelScope.launch { settings.setDayStartMinuteOfDay(minuteOfDay) }
     fun setLogbookRetentionDays(days: Int) = viewModelScope.launch { settings.setLogbookRetentionDays(days) }

@@ -10,6 +10,7 @@ import com.mosquishe.today.data.local.TaskWithDetails
 import com.mosquishe.today.data.repo.TaskRepository
 import com.mosquishe.today.data.settings.SettingsStore
 import com.mosquishe.today.reminder.AlarmReminderScheduler
+import com.mosquishe.today.reminder.applyReminderChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -40,6 +41,17 @@ class AppContainer(context: Context) {
 
     /** Emits a snapshot of a just-deleted to-do so the shell can offer an Undo snackbar. */
     val deletedTaskEvents = MutableSharedFlow<TaskWithDetails>(extraBufferCapacity = 1)
+
+    /** (Re)create the reminder notification channel for the currently-chosen sound. */
+    fun applyReminderChannel() = applicationScope.launch {
+        applyReminderChannel(appContext, settings.reminderSoundValue())
+    }
+
+    /** Persist the reminder sound and rebuild the channel so new reminders use it. */
+    fun setReminderSound(uri: String?) = applicationScope.launch {
+        settings.setReminderSound(uri)
+        applyReminderChannel(appContext, settings.reminderSoundValue())
+    }
 
     init {
         applicationScope.launch {
