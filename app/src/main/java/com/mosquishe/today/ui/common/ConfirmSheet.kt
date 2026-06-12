@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -29,7 +30,7 @@ fun ConfirmSheet(
     ModalBottomSheetMMD(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(Modifier.fillMaxWidth().padding(16.dp)) {
             TextMMD(title)
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.height(8.dp))
             TextMMD(message)
             Row(
                 Modifier.fillMaxWidth().padding(top = 16.dp),

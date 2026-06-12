@@ -61,7 +61,10 @@ fun TaskRow(
                 Spacer(Modifier.height(4.dp))
                 task.checklist.forEach { item ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onToggleItem(item, !item.done) }
+                            .padding(vertical = 1.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         CheckboxMMD(checked = item.done, onCheckedChange = { onToggleItem(item, it) })
