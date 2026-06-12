@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
@@ -16,6 +17,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -24,6 +28,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mosquishe.today.di.appContainer
 import com.mosquishe.today.di.viewModelCreator
 import com.mosquishe.today.domain.TaskView
+import com.mosquishe.today.ui.common.ConfirmSheet
 import com.mosquishe.today.ui.common.EmptyState
 import com.mosquishe.today.ui.common.TagFilterBar
 import com.mosquishe.today.ui.common.TaskRow
@@ -31,6 +36,8 @@ import com.mosquishe.today.util.Dates
 import com.mudita.mmd.components.buttons.FloatingActionButtonMMD
 import com.mudita.mmd.components.divider.HorizontalDividerMMD
 import com.mudita.mmd.components.lazy.LazyColumnMMD
+import com.mudita.mmd.components.menus.DropdownMenuItemMMD
+import com.mudita.mmd.components.menus.DropdownMenuMMD
 import com.mudita.mmd.components.text.TextMMD
 import com.mudita.mmd.components.text_field.TextFieldMMD
 import com.mudita.mmd.components.top_app_bar.TopAppBarMMD
@@ -54,11 +61,25 @@ fun TaskListScreen(
     val today by vm.today.collectAsState()
     val searchQuery by vm.searchQuery.collectAsState()
 
+    var menuOpen by remember { mutableStateOf(false) }
+    var showClearConfirm by remember { mutableStateOf(false) }
+
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             TopAppBarMMD(
                 title = { TextMMD(title(view)) },
                 actions = {
+                    if (view == TaskView.LOGBOOK) {
+                        IconButton(onClick = { menuOpen = true }) {
+                            Icon(Icons.Filled.MoreVert, contentDescription = "More")
+                        }
+                        DropdownMenuMMD(menuOpen, { menuOpen = false }) {
+                            DropdownMenuItemMMD(
+                                { TextMMD("Clear logbook") },
+                                { menuOpen = false; showClearConfirm = true },
+                            )
+                        }
+                    }
                     IconButton(onClick = onOpenSettings) {
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")
                     }
@@ -93,7 +114,7 @@ fun TaskListScreen(
                     if (view == TaskView.LOGBOOK && searchQuery.isNotBlank()) "No matches." else emptyMessage(view),
                 )
             } else {
-                LazyColumnMMD(Modifier.fillMaxSize()) {
+                LazyColumnMMD(Modifier.fillMaxWidth().weight(1f)) {
                     if (view == TaskView.UPCOMING) {
                         tasks.groupBy { it.task.scheduledDate }.forEach { (date, group) ->
                             if (date != null) {
@@ -123,6 +144,16 @@ fun TaskListScreen(
                 Icon(Icons.Filled.Add, contentDescription = "New to-do")
             }
         }
+
+        if (showClearConfirm) {
+            ConfirmSheet(
+                title = "Clear logbook?",
+                message = "This permanently deletes every completed to-do.",
+                confirmLabel = "Clear",
+                onConfirm = { vm.clearLogbook(); showClearConfirm = false },
+                onDismiss = { showClearConfirm = false },
+            )
+        }
     }
 }
 
@@ -140,6 +171,7 @@ private fun row(
         today = today,
         onToggle = { checked -> vm.setCompleted(task.task.id, checked) },
         onClick = { onOpenTask(task.task.id, null) },
+        onToggleItem = { item, done -> vm.setItemDone(item, done) },
     )
     HorizontalDividerMMD()
 }

@@ -14,3 +14,6 @@
 *.jks
 *.keystore
 keystore.properties
+
+# Stray typo of keystore.properties — never track
+keystore.propertie

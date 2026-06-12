@@ -15,6 +15,7 @@ import com.mosquishe.today.domain.TaskView
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -223,6 +224,18 @@ class TaskRepository(
     }
 
     suspend fun deleteTag(tag: TagEntity) = tagDao.delete(tag)
+
+    // ---- Logbook maintenance ----------------------------------------------
+
+    /** Empty the logbook (delete every completed to-do). */
+    suspend fun clearLogbook() = taskDao.deleteAllCompleted()
+
+    /** Drop completed to-dos older than the retention window. No-op when retention is off (0). */
+    suspend fun pruneLogbook() {
+        val days = settings.logbookRetentionDaysValue()
+        if (days <= 0) return
+        taskDao.deleteCompletedBefore(Instant.now().minus(Duration.ofDays(days.toLong())))
+    }
 
     suspend fun setTaskTags(taskId: Long, tagIds: List<Long>) {
         taskDao.clearTaskTags(taskId)

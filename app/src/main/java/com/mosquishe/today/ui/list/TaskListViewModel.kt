@@ -2,6 +2,7 @@ package com.mosquishe.today.ui.list
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mosquishe.today.data.local.ChecklistItemEntity
 import com.mosquishe.today.data.local.TagEntity
 import com.mosquishe.today.data.local.TaskWithDetails
 import com.mosquishe.today.data.repo.TaskRepository
@@ -49,5 +50,13 @@ class TaskListViewModel(
 
     fun setCompleted(taskId: Long, completed: Boolean) {
         viewModelScope.launch { repo.setTaskCompleted(taskId, completed) }
+    }
+
+    fun setItemDone(item: ChecklistItemEntity, done: Boolean) {
+        viewModelScope.launch { repo.setChecklistItemDone(item, done) }
+    }
+
+    fun clearLogbook() {
+        viewModelScope.launch { repo.clearLogbook() }
     }
 }

@@ -1,5 +1,6 @@
 package com.mosquishe.today.ui.settings
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mosquishe.today.di.appContainer
 import com.mosquishe.today.di.viewModelCreator
+import com.mudita.mmd.components.chips.FilterChipMMD
 import com.mudita.mmd.components.divider.HorizontalDividerMMD
 import com.mudita.mmd.components.lazy.LazyColumnMMD
 import com.mudita.mmd.components.switcher.SwitchMMD
@@ -44,7 +46,7 @@ import kotlinx.coroutines.flow.first
 fun SettingsScreen(onBack: () -> Unit) {
     val container = appContainer()
     val vm: SettingsViewModel = viewModel(
-        factory = viewModelCreator { SettingsViewModel(container.repository, container.settings) },
+        factory = viewModelCreator { SettingsViewModel(container.repository, container.settings, container.applicationScope) },
     )
 
     val autoComplete by vm.autoComplete.collectAsState()
@@ -64,36 +66,81 @@ fun SettingsScreen(onBack: () -> Unit) {
             },
         )
 
-        LazyColumnMMD(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
+        // Section headers are substantial items (divider + label folded in); the tag rows stay
+        // individual and uniform. MMD estimates "scrollable" as totalItems * firstVisibleItem.size
+        // > viewport, so no item may be tiny (a bare divider/label) and none may be a single item
+        // taller than the viewport (don't lump the whole tag list into one item). weight(1f) gives
+        // the list its real remaining height. See the MangaShelf MMD docs.
+        LazyColumnMMD(Modifier.fillMaxWidth().weight(1f), contentPadding = PaddingValues(bottom = 32.dp)) {
             item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    TextMMD("Complete to-do when checklist finished", modifier = Modifier.weight(1f))
-                    Spacer(Modifier.width(12.dp))
-                    SwitchMMD(checked = autoComplete, onCheckedChange = { vm.setAutoComplete(it) })
+                Column {
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TextMMD("Complete to-do when checklist finished", modifier = Modifier.weight(1f))
+                        Spacer(Modifier.width(12.dp))
+                        SwitchMMD(checked = autoComplete, onCheckedChange = { vm.setAutoComplete(it) })
+                    }
+                    HorizontalDividerMMD()
                 }
             }
 
-            item { HorizontalDividerMMD() }
-
-            item { SectionLabel("Day starts at") }
             item {
-                val seed = dayStartSeed
-                if (seed != null) {
-                    key(seed) {
-                        val state = rememberTimeInputMMDState(seed / 60, seed % 60, true)
-                        LaunchedEffect(state.hour, state.minute) {
-                            vm.setDayStart(state.hour * 60 + state.minute)
+                Column {
+                    SectionLabel("Day starts at")
+                    val seed = dayStartSeed
+                    if (seed != null) {
+                        key(seed) {
+                            val state = rememberTimeInputMMDState(seed / 60, seed % 60, true)
+                            LaunchedEffect(state.hour, state.minute) {
+                                vm.setDayStart(state.hour * 60 + state.minute)
+                            }
+                            TimeInputMMD(state, Modifier.padding(horizontal = 16.dp))
                         }
-                        TimeInputMMD(state, Modifier.padding(horizontal = 16.dp))
+                    }
+                    HorizontalDividerMMD()
+                }
+            }
+
+            item {
+                Column {
+                    SectionLabel("Keep completed to-dos")
+                    val retention by vm.logbookRetentionDays.collectAsState()
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        FilterChipMMD(retention == 0, { vm.setLogbookRetentionDays(0) }, { TextMMD("Forever") })
+                        FilterChipMMD(retention == 30, { vm.setLogbookRetentionDays(30) }, { TextMMD("30 days") })
+                        FilterChipMMD(retention == 90, { vm.setLogbookRetentionDays(90) }, { TextMMD("90 days") })
+                    }
+                    HorizontalDividerMMD()
+                }
+            }
+
+            // Tags header: label + the add-tag field (keeps it off the tiny-item list).
+            item {
+                Column {
+                    SectionLabel("Tags")
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TextFieldMMD(
+                            value = newTag,
+                            onValueChange = { newTag = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { TextMMD("New tag") },
+                            singleLine = true,
+                        )
+                        IconButton(onClick = {
+                            if (newTag.isNotBlank()) { vm.createTag(newTag); newTag = "" }
+                        }) { Icon(Icons.Filled.Add, contentDescription = "Add tag") }
                     }
                 }
             }
 
-            item { HorizontalDividerMMD() }
-            item { SectionLabel("Tags") }
             items(tags, key = { it.id }) { tag ->
                 var name by remember(tag.id) { mutableStateOf(tag.name) }
                 Row(
@@ -109,23 +156,6 @@ fun SettingsScreen(onBack: () -> Unit) {
                     IconButton(onClick = { vm.deleteTag(tag) }) {
                         Icon(Icons.Filled.Delete, contentDescription = "Delete tag")
                     }
-                }
-            }
-            item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    TextFieldMMD(
-                        value = newTag,
-                        onValueChange = { newTag = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { TextMMD("New tag") },
-                        singleLine = true,
-                    )
-                    IconButton(onClick = {
-                        if (newTag.isNotBlank()) { vm.createTag(newTag); newTag = "" }
-                    }) { Icon(Icons.Filled.Add, contentDescription = "Add tag") }
                 }
             }
         }
