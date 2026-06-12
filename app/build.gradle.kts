@@ -21,8 +21,8 @@ android {
         applicationId = "com.mosquishe.today"
         minSdk = 28
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.1.0"
 
         // arm64-only: Mudita Kompakt is Helio A22 (arm64-v8a). Drops other-ABI native code.
         ndk {
