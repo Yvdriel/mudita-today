@@ -28,6 +28,10 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE id = :id")
     suspend fun getTaskEntity(id: Long): TaskEntity?
 
+    /** Active to-dos carrying a reminder on a real date — used to (re)schedule alarms (e.g. after reboot). */
+    @Query("SELECT * FROM tasks WHERE completed = 0 AND reminderTime IS NOT NULL AND scheduledDate IS NOT NULL")
+    suspend fun tasksWithReminders(): List<TaskEntity>
+
     @Insert suspend fun insertTask(task: TaskEntity): Long
     @Update suspend fun updateTask(task: TaskEntity)
     @Query("DELETE FROM tasks WHERE id = :id") suspend fun deleteTaskById(id: Long)

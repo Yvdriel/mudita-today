@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -21,6 +22,7 @@ class SettingsStore(private val context: Context) {
         val AUTO_COMPLETE = booleanPreferencesKey("auto_complete_when_checklist_done")
         val DAY_START_MINUTE = intPreferencesKey("day_start_minute_of_day")
         val LOGBOOK_RETENTION_DAYS = intPreferencesKey("logbook_retention_days")
+        val REMINDER_SOUND = stringPreferencesKey("reminder_sound_uri")
     }
 
     /** Complete a to-do automatically once every checklist item is done. Default on. */
@@ -39,9 +41,17 @@ class SettingsStore(private val context: Context) {
     val logbookRetentionDays: Flow<Int> =
         context.dataStore.data.map { it[Keys.LOGBOOK_RETENTION_DAYS] ?: DEFAULT_LOGBOOK_RETENTION_DAYS }
 
+    /**
+     * Reminder notification sound. null/absent = system default notification tone;
+     * [REMINDER_SOUND_SILENT] = no sound; otherwise a ringtone URI string.
+     */
+    val reminderSound: Flow<String?> =
+        context.dataStore.data.map { it[Keys.REMINDER_SOUND] }
+
     suspend fun autoCompleteValue(): Boolean = autoComplete.first()
     suspend fun dayStartValue(): LocalTime = dayStart.first()
     suspend fun logbookRetentionDaysValue(): Int = logbookRetentionDays.first()
+    suspend fun reminderSoundValue(): String? = reminderSound.first()
 
     suspend fun setAutoComplete(enabled: Boolean) {
         context.dataStore.edit { it[Keys.AUTO_COMPLETE] = enabled }
@@ -55,9 +65,19 @@ class SettingsStore(private val context: Context) {
         context.dataStore.edit { it[Keys.LOGBOOK_RETENTION_DAYS] = days.coerceAtLeast(0) }
     }
 
+    /** Set the reminder sound. null = default tone; [REMINDER_SOUND_SILENT] = silent; else a URI. */
+    suspend fun setReminderSound(uri: String?) {
+        context.dataStore.edit {
+            if (uri == null) it.remove(Keys.REMINDER_SOUND) else it[Keys.REMINDER_SOUND] = uri
+        }
+    }
+
     companion object {
         const val DEFAULT_AUTO_COMPLETE = true
         const val DEFAULT_DAY_START_MINUTE = 180 // 03:00
         const val DEFAULT_LOGBOOK_RETENTION_DAYS = 0 // keep everything
+
+        /** Sentinel stored for "no sound". */
+        const val REMINDER_SOUND_SILENT = "silent"
     }
 }

@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.LocalTime
 
 /**
  * Backs the add/edit detail screen. A new to-do (requestedId 0) is created immediately so its
@@ -73,6 +74,7 @@ class TaskDetailViewModel(
     fun onTitleChange(value: String) { title = value; persist { repo.setTitle(id(), value) } }
     fun onNotesChange(value: String) { notes = value; persist { repo.setNotes(id(), value) } }
     fun setScheduledDate(date: LocalDate?) = persist { repo.setScheduledDate(id(), date) }
+    fun setReminder(time: LocalTime?) = persist { repo.setReminder(id(), time) }
     fun setDeadline(date: LocalDate?) = persist { repo.setDeadline(id(), date) }
     fun setRecurrence(rule: Recurrence?) = persist { repo.setRecurrence(id(), rule) }
     fun setCompleted(completed: Boolean) = persist { repo.setTaskCompleted(id(), completed) }

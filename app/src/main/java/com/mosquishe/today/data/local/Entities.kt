@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 import com.mosquishe.today.domain.Recurrence
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 
 /** A to-do. Dates use [LocalDate] (null scheduledDate = Anytime). Times stored via [Converters]. */
 @Entity(tableName = "tasks")
@@ -17,6 +18,8 @@ data class TaskEntity(
     val scheduledDate: LocalDate? = null,
     val deadline: LocalDate? = null,
     val recurrence: Recurrence? = null,
+    /** Things3-style reminder: a time-of-day on [scheduledDate]. Null = no reminder. */
+    val reminderTime: LocalTime? = null,
     val completed: Boolean = false,
     val completedAt: Instant? = null,
     val createdAt: Instant = Instant.EPOCH,

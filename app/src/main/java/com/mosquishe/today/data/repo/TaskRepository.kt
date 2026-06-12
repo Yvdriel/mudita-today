@@ -10,7 +10,10 @@ import com.mosquishe.today.data.local.TaskWithDetails
 import com.mosquishe.today.data.settings.SettingsStore
 import com.mosquishe.today.domain.Completion
 import com.mosquishe.today.domain.DateLogic
+import com.mosquishe.today.domain.NoopReminderScheduler
 import com.mosquishe.today.domain.Recurrence
+import com.mosquishe.today.domain.ReminderScheduler
+import com.mosquishe.today.domain.Reminders
 import com.mosquishe.today.domain.TaskView
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -19,6 +22,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 /**
  * Single gateway between the UI and persistence. Owns the view filtering (delegating the rules to
@@ -31,6 +35,7 @@ class TaskRepository(
     private val taskDao: TaskDao,
     private val tagDao: TagDao,
     private val settings: SettingsStore,
+    private val reminderScheduler: ReminderScheduler = NoopReminderScheduler,
     private val now: () -> LocalDateTime = { LocalDateTime.now() },
 ) {
 
@@ -101,20 +106,63 @@ class TaskRepository(
     // Granular field setters — the detail screen persists each edit immediately (Things3-style).
     suspend fun setTitle(taskId: Long, title: String) = edit(taskId) { it.copy(title = title) }
     suspend fun setNotes(taskId: Long, notes: String) = edit(taskId) { it.copy(notes = notes) }
-    suspend fun setScheduledDate(taskId: Long, date: LocalDate?) = edit(taskId) { it.copy(scheduledDate = date) }
     suspend fun setDeadline(taskId: Long, date: LocalDate?) = edit(taskId) { it.copy(deadline = date) }
     suspend fun setRecurrence(taskId: Long, recurrence: Recurrence?) = edit(taskId) { it.copy(recurrence = recurrence) }
+
+    /**
+     * Moving the "When" re-aims any reminder (which is a time on that date) and re-arms its alarm.
+     * Clearing the date (Someday) also clears the reminder — a reminder can't exist without a date.
+     */
+    suspend fun setScheduledDate(taskId: Long, date: LocalDate?) {
+        val t = taskDao.getTaskEntity(taskId) ?: return
+        val updated = t.copy(scheduledDate = date, reminderTime = if (date == null) null else t.reminderTime)
+        taskDao.updateTask(updated)
+        syncReminder(updated)
+    }
+
+    /**
+     * Set or clear the to-do's reminder time. Things3: adding a reminder to an undated to-do
+     * anchors it to Today. Arms/cancels the OS alarm to match.
+     */
+    suspend fun setReminder(taskId: Long, time: LocalTime?) {
+        val t = taskDao.getTaskEntity(taskId) ?: return
+        val today = DateLogic.logicalToday(now(), settings.dayStartValue())
+        val updated = t.copy(
+            reminderTime = time,
+            scheduledDate = Reminders.resolveScheduledDate(time, t.scheduledDate, today),
+        )
+        taskDao.updateTask(updated)
+        syncReminder(updated)
+    }
 
     private suspend inline fun edit(taskId: Long, transform: (TaskEntity) -> TaskEntity) {
         val t = taskDao.getTaskEntity(taskId) ?: return
         taskDao.updateTask(transform(t))
     }
 
-    suspend fun deleteTask(taskId: Long) = taskDao.deleteTaskById(taskId)
+    /** Arm the alarm when the to-do has an active future reminder, otherwise make sure none is pending. */
+    private fun syncReminder(task: TaskEntity) {
+        if (Reminders.shouldSchedule(task.scheduledDate, task.reminderTime, task.completed, now())) {
+            reminderScheduler.schedule(task.id, task.title, Reminders.reminderAt(task.scheduledDate, task.reminderTime)!!)
+        } else {
+            reminderScheduler.cancel(task.id)
+        }
+    }
+
+    /** Re-arm every active, future reminder. Called on boot and cold start (alarms don't survive those). */
+    suspend fun rescheduleAllReminders() {
+        taskDao.tasksWithReminders().forEach { syncReminder(it) }
+    }
+
+    suspend fun deleteTask(taskId: Long) {
+        reminderScheduler.cancel(taskId)
+        taskDao.deleteTaskById(taskId)
+    }
 
     /** Delete a to-do but return a full snapshot first, so it can be [restore]d (undo). */
     suspend fun captureAndDelete(taskId: Long): TaskWithDetails? {
         val snapshot = taskDao.getTask(taskId) ?: return null
+        reminderScheduler.cancel(taskId)
         taskDao.deleteTaskById(taskId)
         return snapshot
     }
@@ -124,6 +172,7 @@ class TaskRepository(
         val newId = taskDao.insertTask(snapshot.task.copy(id = 0))
         snapshot.checklist.forEach { taskDao.insertChecklistItem(it.copy(id = 0, taskId = newId)) }
         snapshot.tags.forEach { taskDao.addTagToTask(TaskTagCrossRef(newId, it.id)) }
+        syncReminder(snapshot.task.copy(id = newId))
     }
 
     /** Sweep blank drafts orphaned by a force-quit. Called once at startup. */
@@ -145,29 +194,31 @@ class TaskRepository(
     }
 
     private suspend fun applyCompletion(task: TaskEntity, completed: Boolean) {
-        taskDao.updateTask(
-            task.copy(completed = completed, completedAt = if (completed) Instant.now() else null),
-        )
+        val updated = task.copy(completed = completed, completedAt = if (completed) Instant.now() else null)
+        taskDao.updateTask(updated)
+        // Completing cancels this to-do's reminder; un-completing re-arms it (if still in the future).
+        syncReminder(updated)
         if (completed && task.recurrence != null) spawnNextOccurrence(task)
     }
 
     private suspend fun spawnNextOccurrence(task: TaskEntity) {
         val rule = task.recurrence ?: return
         val base = task.scheduledDate ?: DateLogic.logicalToday(now(), settings.dayStartValue())
-        val newId = taskDao.insertTask(
-            task.copy(
-                id = 0,
-                scheduledDate = rule.nextDate(base),
-                completed = false,
-                completedAt = null,
-                createdAt = Instant.now(),
-                sortOrder = taskDao.maxSortOrder() + 1,
-            ),
+        // The reminder time-of-day carries over via copy(); it re-fires on the next occurrence's date.
+        val next = task.copy(
+            id = 0,
+            scheduledDate = rule.nextDate(base),
+            completed = false,
+            completedAt = null,
+            createdAt = Instant.now(),
+            sortOrder = taskDao.maxSortOrder() + 1,
         )
+        val newId = taskDao.insertTask(next)
         taskDao.checklistFor(task.id).forEach {
             taskDao.insertChecklistItem(it.copy(id = 0, taskId = newId, done = false))
         }
         taskDao.tagIdsFor(task.id).forEach { taskDao.addTagToTask(TaskTagCrossRef(newId, it)) }
+        syncReminder(next.copy(id = newId))
     }
 
     // ---- Checklist ---------------------------------------------------------

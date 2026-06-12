@@ -1,6 +1,11 @@
 package com.mosquishe.today.ui.detail
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -26,14 +31,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mosquishe.today.di.appContainer
 import com.mosquishe.today.di.viewModelCreator
 import com.mosquishe.today.domain.Recurrence
 import com.mosquishe.today.ui.common.CalendarSheet
+import com.mosquishe.today.ui.common.TimeSheet
 import com.mosquishe.today.util.Dates
+import java.time.LocalTime
 import com.mudita.mmd.components.checkbox.CheckboxMMD
 import com.mudita.mmd.components.chips.AssistChipMMD
 import com.mudita.mmd.components.chips.FilterChipMMD
@@ -67,9 +76,24 @@ fun TaskDetailScreen(taskId: Long, defaultEpochDay: Long, onBack: () -> Unit) {
     val today by vm.today.collectAsState()
 
     var dateField by remember { mutableStateOf<DateField?>(null) }
+    var showReminder by remember { mutableStateOf(false) }
     var newItem by remember { mutableStateOf("") }
     var newTag by remember { mutableStateOf("") }
     var menuOpen by remember { mutableStateOf(false) }
+
+    // Reminders post notifications; on Android 13+ that needs a runtime grant. Ask when the user
+    // adds one — scheduling still proceeds, the notification just won't show until granted.
+    val context = LocalContext.current
+    val notifPermissionLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    fun ensureNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
 
     fun leave() { vm.discardIfEmptyOnExit(); onBack() }
     BackHandler { leave() }
@@ -77,6 +101,7 @@ fun TaskDetailScreen(taskId: Long, defaultEpochDay: Long, onBack: () -> Unit) {
     val t = task?.task
     val scheduled = t?.scheduledDate
     val deadline = t?.deadline
+    val reminder = t?.reminderTime
     val recurrence = t?.recurrence
     val assignedTagIds = task?.tags?.map { it.id }?.toSet() ?: emptySet()
     val checklist = task?.checklist ?: emptyList()
@@ -187,6 +212,22 @@ fun TaskDetailScreen(taskId: Long, defaultEpochDay: Long, onBack: () -> Unit) {
                 }
             }
 
+            // Reminder — a time-of-day on the When date (Things3-style).
+            item {
+                Column {
+                    SectionLabel("Reminder")
+                    ChipRow {
+                        AssistChipMMD(
+                            { ensureNotificationPermission(); showReminder = true },
+                            { TextMMD(reminder?.let { Dates.timeLabel(it) } ?: "Add reminder") },
+                        )
+                        if (reminder != null) {
+                            AssistChipMMD({ vm.setReminder(null) }, { TextMMD("Clear") })
+                        }
+                    }
+                }
+            }
+
             // Deadline
             item {
                 Column {
@@ -260,6 +301,14 @@ fun TaskDetailScreen(taskId: Long, defaultEpochDay: Long, onBack: () -> Unit) {
             onDismiss = { dateField = null },
         )
         null -> Unit
+    }
+
+    if (showReminder) {
+        TimeSheet(
+            initial = reminder ?: LocalTime.of(9, 0),
+            onResult = { vm.setReminder(it) },
+            onDismiss = { showReminder = false },
+        )
     }
 }
 
