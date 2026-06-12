@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -104,7 +103,12 @@ fun TaskDetailScreen(taskId: Long, defaultEpochDay: Long, onBack: () -> Unit) {
             },
         )
 
-        LazyColumnMMD(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 32.dp)) {
+        // Each item below is one substantial section, never a bare divider or label. MMD's
+        // scrollbar assumes every item is the height of the first visible one
+        // (canScroll = totalItems * firstVisibleItem.size > viewport); tiny divider/label items
+        // make that estimate collapse at the bottom and the scrollbar vanishes. weight(1f) (not
+        // fillMaxSize) gives the list its real remaining height. See the MangaShelf MMD docs.
+        LazyColumnMMD(Modifier.fillMaxWidth().weight(1f), contentPadding = PaddingValues(bottom = 32.dp)) {
             item {
                 TextFieldMMD(
                     value = vm.title,
@@ -123,116 +127,122 @@ fun TaskDetailScreen(taskId: Long, defaultEpochDay: Long, onBack: () -> Unit) {
                 )
             }
 
-            // Checklist ---------------------------------------------------
-            // Kept right under Notes so checking items off doesn't mean scrolling past
-            // every date/tag field (Tobias's suggestion).
-            item { HorizontalDividerMMD() }
-            item { SectionLabel("Checklist") }
-            items(checklist, key = { it.id }) { itemEntity ->
-                var text by remember(itemEntity.id) { mutableStateOf(itemEntity.text) }
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CheckboxMMD(checked = itemEntity.done, onCheckedChange = { vm.setItemDone(itemEntity, it) })
-                    TextFieldMMD(
-                        value = text,
-                        onValueChange = { text = it; vm.setItemText(itemEntity, it) },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                    )
-                    IconButton(onClick = { vm.deleteItem(itemEntity) }) {
-                        Icon(Icons.Filled.Close, contentDescription = "Remove")
+            // Checklist — one section item (kept under Notes so ticking items off doesn't mean
+            // scrolling past the date/tag fields).
+            item {
+                Column {
+                    HorizontalDividerMMD()
+                    SectionLabel("Checklist")
+                    checklist.forEach { itemEntity ->
+                        var text by remember(itemEntity.id) { mutableStateOf(itemEntity.text) }
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            CheckboxMMD(checked = itemEntity.done, onCheckedChange = { vm.setItemDone(itemEntity, it) })
+                            TextFieldMMD(
+                                value = text,
+                                onValueChange = { text = it; vm.setItemText(itemEntity, it) },
+                                modifier = Modifier.weight(1f),
+                                singleLine = true,
+                            )
+                            IconButton(onClick = { vm.deleteItem(itemEntity) }) {
+                                Icon(Icons.Filled.Close, contentDescription = "Remove")
+                            }
+                        }
                     }
-                }
-            }
-            item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    TextFieldMMD(
-                        value = newItem,
-                        onValueChange = { newItem = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { TextMMD("Add item") },
-                        singleLine = true,
-                    )
-                    IconButton(onClick = {
-                        if (newItem.isNotBlank()) { vm.addChecklistItem(newItem); newItem = "" }
-                    }) { Icon(Icons.Filled.Add, contentDescription = "Add item") }
-                }
-            }
-
-            item { HorizontalDividerMMD() }
-
-            // When --------------------------------------------------------
-            item { SectionLabel("When") }
-            item {
-                ChipRow {
-                    FilterChipMMD(scheduled == today, { vm.setScheduledDate(today) }, { TextMMD("Today") })
-                    FilterChipMMD(scheduled == today.plusDays(1), { vm.setScheduledDate(today.plusDays(1)) }, { TextMMD("Tomorrow") })
-                    FilterChipMMD(scheduled == null, { vm.setScheduledDate(null) }, { TextMMD("Someday") })
-                    val custom = scheduled != null && scheduled != today && scheduled != today.plusDays(1)
-                    AssistChipMMD(
-                        { dateField = DateField.WHEN },
-                        { TextMMD(if (custom) Dates.relativeLabel(scheduled!!, today) else "Pick date") },
-                    )
-                }
-            }
-
-            // Deadline ----------------------------------------------------
-            item { SectionLabel("Deadline") }
-            item {
-                ChipRow {
-                    AssistChipMMD(
-                        { dateField = DateField.DEADLINE },
-                        { TextMMD(deadline?.let { "Due ${Dates.relativeLabel(it, today)}" } ?: "Add deadline") },
-                    )
-                    if (deadline != null) {
-                        AssistChipMMD({ vm.setDeadline(null) }, { TextMMD("Clear") })
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TextFieldMMD(
+                            value = newItem,
+                            onValueChange = { newItem = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { TextMMD("Add item") },
+                            singleLine = true,
+                        )
+                        IconButton(onClick = {
+                            if (newItem.isNotBlank()) { vm.addChecklistItem(newItem); newItem = "" }
+                        }) { Icon(Icons.Filled.Add, contentDescription = "Add item") }
                     }
                 }
             }
 
-            // Repeat ------------------------------------------------------
-            item { SectionLabel("Repeat") }
+            // When
             item {
-                ChipRow {
-                    FilterChipMMD(recurrence == null, { vm.setRecurrence(null) }, { TextMMD("None") })
-                    FilterChipMMD(recurrence == Recurrence.DAILY, { vm.setRecurrence(Recurrence.DAILY) }, { TextMMD("Daily") })
-                    FilterChipMMD(recurrence == Recurrence.WEEKLY, { vm.setRecurrence(Recurrence.WEEKLY) }, { TextMMD("Weekly") })
-                    FilterChipMMD(recurrence == Recurrence.MONTHLY, { vm.setRecurrence(Recurrence.MONTHLY) }, { TextMMD("Monthly") })
-                }
-            }
-
-            // Tags --------------------------------------------------------
-            item { SectionLabel("Tags") }
-            if (allTags.isNotEmpty()) {
-                item {
+                Column {
+                    HorizontalDividerMMD()
+                    SectionLabel("When")
                     ChipRow {
-                        allTags.forEach { tag ->
-                            val assigned = tag.id in assignedTagIds
-                            FilterChipMMD(assigned, { vm.toggleTag(tag.id, assigned) }, { TextMMD(tag.name) })
+                        FilterChipMMD(scheduled == today, { vm.setScheduledDate(today) }, { TextMMD("Today") })
+                        FilterChipMMD(scheduled == today.plusDays(1), { vm.setScheduledDate(today.plusDays(1)) }, { TextMMD("Tomorrow") })
+                        FilterChipMMD(scheduled == null, { vm.setScheduledDate(null) }, { TextMMD("Someday") })
+                        val custom = scheduled != null && scheduled != today && scheduled != today.plusDays(1)
+                        AssistChipMMD(
+                            { dateField = DateField.WHEN },
+                            { TextMMD(if (custom) Dates.relativeLabel(scheduled!!, today) else "Pick date") },
+                        )
+                    }
+                }
+            }
+
+            // Deadline
+            item {
+                Column {
+                    SectionLabel("Deadline")
+                    ChipRow {
+                        AssistChipMMD(
+                            { dateField = DateField.DEADLINE },
+                            { TextMMD(deadline?.let { "Due ${Dates.relativeLabel(it, today)}" } ?: "Add deadline") },
+                        )
+                        if (deadline != null) {
+                            AssistChipMMD({ vm.setDeadline(null) }, { TextMMD("Clear") })
                         }
                     }
                 }
             }
+
+            // Repeat
             item {
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    TextFieldMMD(
-                        value = newTag,
-                        onValueChange = { newTag = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { TextMMD("New tag") },
-                        singleLine = true,
-                    )
-                    IconButton(onClick = {
-                        if (newTag.isNotBlank()) { vm.createTagAndAssign(newTag); newTag = "" }
-                    }) { Icon(Icons.Filled.Add, contentDescription = "Add tag") }
+                Column {
+                    SectionLabel("Repeat")
+                    ChipRow {
+                        FilterChipMMD(recurrence == null, { vm.setRecurrence(null) }, { TextMMD("None") })
+                        FilterChipMMD(recurrence == Recurrence.DAILY, { vm.setRecurrence(Recurrence.DAILY) }, { TextMMD("Daily") })
+                        FilterChipMMD(recurrence == Recurrence.WEEKLY, { vm.setRecurrence(Recurrence.WEEKLY) }, { TextMMD("Weekly") })
+                        FilterChipMMD(recurrence == Recurrence.MONTHLY, { vm.setRecurrence(Recurrence.MONTHLY) }, { TextMMD("Monthly") })
+                    }
+                }
+            }
+
+            // Tags
+            item {
+                Column {
+                    SectionLabel("Tags")
+                    if (allTags.isNotEmpty()) {
+                        ChipRow {
+                            allTags.forEach { tag ->
+                                val assigned = tag.id in assignedTagIds
+                                FilterChipMMD(assigned, { vm.toggleTag(tag.id, assigned) }, { TextMMD(tag.name) })
+                            }
+                        }
+                    }
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TextFieldMMD(
+                            value = newTag,
+                            onValueChange = { newTag = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = { TextMMD("New tag") },
+                            singleLine = true,
+                        )
+                        IconButton(onClick = {
+                            if (newTag.isNotBlank()) { vm.createTagAndAssign(newTag); newTag = "" }
+                        }) { Icon(Icons.Filled.Add, contentDescription = "Add tag") }
+                    }
                 }
             }
         }

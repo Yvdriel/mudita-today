@@ -114,7 +114,7 @@ fun TaskListScreen(
                     if (view == TaskView.LOGBOOK && searchQuery.isNotBlank()) "No matches." else emptyMessage(view),
                 )
             } else {
-                LazyColumnMMD(Modifier.fillMaxSize()) {
+                LazyColumnMMD(Modifier.fillMaxWidth().weight(1f)) {
                     if (view == TaskView.UPCOMING) {
                         tasks.groupBy { it.task.scheduledDate }.forEach { (date, group) ->
                             if (date != null) {
