@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -44,10 +45,11 @@ import com.mudita.mmd.components.snackbar.SnackbarHostStateMMD
 import com.mudita.mmd.components.snackbar.SnackbarMMD
 import com.mudita.mmd.components.snackbar.SnackbarResultMMD
 import com.mudita.mmd.components.text.TextMMD
+import kotlinx.coroutines.flow.MutableStateFlow
 
 /** Root layout: a bottom nav bar over a no-animation NavHost. Bottom bar shows only on tab routes. */
 @Composable
-fun AppShell() {
+fun AppShell(deepLinkTaskId: MutableStateFlow<Long?> = remember { MutableStateFlow(null) }) {
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
     val currentRoute = entry?.destination?.route
@@ -59,6 +61,15 @@ fun AppShell() {
         container.deletedTaskEvents.collect { snapshot ->
             val result = snackbarState.showSnackbar("To-do deleted", "Undo")
             if (result == SnackbarResultMMD.ActionPerformed) container.repository.restore(snapshot)
+        }
+    }
+
+    // Open the to-do tapped in a reminder notification, then clear the request so it fires once.
+    val pendingTaskId by deepLinkTaskId.collectAsState()
+    LaunchedEffect(pendingTaskId) {
+        pendingTaskId?.let { id ->
+            nav.navigate(Routes.detail(id))
+            deepLinkTaskId.value = null
         }
     }
 

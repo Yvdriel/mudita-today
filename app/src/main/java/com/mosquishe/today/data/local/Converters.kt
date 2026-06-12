@@ -4,6 +4,7 @@ import androidx.room.TypeConverter
 import com.mosquishe.today.domain.Recurrence
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 
 /** Room type converters: dates as epoch-day, instants as epoch-milli, recurrence as its storage string. */
 class Converters {
@@ -12,6 +13,9 @@ class Converters {
 
     @TypeConverter fun instantToLong(i: Instant?): Long? = i?.toEpochMilli()
     @TypeConverter fun longToInstant(v: Long?): Instant? = v?.let(Instant::ofEpochMilli)
+
+    @TypeConverter fun timeToInt(t: LocalTime?): Int? = t?.toSecondOfDay()
+    @TypeConverter fun intToTime(v: Int?): LocalTime? = v?.let { LocalTime.ofSecondOfDay(it.toLong()) }
 
     @TypeConverter fun recurrenceToString(r: Recurrence?): String? = r?.toStorageString()
     @TypeConverter fun stringToRecurrence(s: String?): Recurrence? = Recurrence.parse(s)

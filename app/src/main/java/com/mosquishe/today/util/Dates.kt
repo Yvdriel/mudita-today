@@ -2,6 +2,7 @@ package com.mosquishe.today.util
 
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -13,6 +14,7 @@ object Dates {
     private val dayMonth = DateTimeFormatter.ofPattern("EEE d MMM")
     private val dayMonthYear = DateTimeFormatter.ofPattern("EEE d MMM yyyy")
     private val logDate = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+    private val hourMinute = DateTimeFormatter.ofPattern("HH:mm")
 
     /** MMD/Compose date pickers work in UTC-midnight millis. */
     fun localDateToUtcMillis(d: LocalDate): Long = d.toEpochDay() * MS_PER_DAY
@@ -29,4 +31,7 @@ object Dates {
     }
 
     fun fullLabel(d: LocalDate): String = d.format(logDate)
+
+    /** 24-hour "HH:mm" label for a reminder time-of-day. */
+    fun timeLabel(t: LocalTime): String = t.format(hourMinute)
 }

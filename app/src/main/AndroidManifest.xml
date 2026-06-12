@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Reminder notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Exact alarms: API 31-32 use SCHEDULE_EXACT_ALARM; API 33+ use USE_EXACT_ALARM
+         (auto-granted, correct for an alarm/reminder app). 28-30 need no permission. -->
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
     <application
         android:name=".TodayApp"
         android:allowBackup="true"
@@ -12,12 +22,27 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.Today">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Fires when a reminder is due; posts the notification. -->
+        <receiver
+            android:name=".reminder.ReminderReceiver"
+            android:exported="false" />
+
+        <!-- Re-arms reminders after a reboot. -->
+        <receiver
+            android:name=".reminder.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

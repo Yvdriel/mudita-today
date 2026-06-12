@@ -9,6 +9,7 @@ import com.mosquishe.today.data.local.TodayDatabase
 import com.mosquishe.today.data.local.TaskWithDetails
 import com.mosquishe.today.data.repo.TaskRepository
 import com.mosquishe.today.data.settings.SettingsStore
+import com.mosquishe.today.reminder.AlarmReminderScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,7 +27,7 @@ class AppContainer(context: Context) {
         appContext,
         TodayDatabase::class.java,
         "today.db",
-    ).build()
+    ).addMigrations(TodayDatabase.MIGRATION_1_2).build()
 
     val settings: SettingsStore = SettingsStore(appContext)
 
@@ -34,6 +35,7 @@ class AppContainer(context: Context) {
         taskDao = database.taskDao(),
         tagDao = database.tagDao(),
         settings = settings,
+        reminderScheduler = AlarmReminderScheduler(appContext),
     )
 
     /** Emits a snapshot of a just-deleted to-do so the shell can offer an Undo snackbar. */
@@ -45,6 +47,8 @@ class AppContainer(context: Context) {
             repository.deleteEmptyTasks()
             // Trim the logbook to the retention window, if the user set one.
             repository.pruneLogbook()
+            // Re-arm reminders: alarms are cleared on reboot, app update, and force-stop.
+            repository.rescheduleAllReminders()
         }
     }
 }
